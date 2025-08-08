@@ -1,0 +1,178 @@
+<html>
+
+<head>
+    <title>
+        IMAGE CLASSIFICATION
+    </title>
+    <link rel="stylesheet" href="stylesheet.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+    <script src="script.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.3/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+
+</head>
+
+<body>
+    <div class="content">
+        <div class="col-md-6 offset-md-3 mt-5">
+            <div class="row">
+                <div class="col-2">
+                    <a target="_blank">
+                        <img src='IMAGES/logo.jpg'>
+                    </a>
+                </div>
+                <div class="col-10">
+                    <h1>Skin Cancer Detection using Machine Learning</h1>
+                </div>
+            </div>
+
+            <br>
+
+            <form accept-charset="UTF-8" method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="exampleInputName">Patient Full Name</label>
+                    <input type="text" name="fullname" class="form-control" id="exampleInputName"
+                        placeholder="Enter your name and surname" required="required">
+                </div>
+                <div class="form-group">
+                    <label for="exampleInputEmail1" required="required">Patient Email address</label>
+                    <input type="email" name="email" class="form-control" id="exampleInputEmail1"
+                        aria-describedby="emailHelp" placeholder="Enter email">
+                </div>
+                <div class="form-group">
+                    <label for="exampleFormControlSelect1">Patient Gender</label>
+                    <select class="form-control" id="exampleFormControlSelect1" name="platform" required="required">
+                        <option>Male</option>
+                        <option>Female</option>
+                        <option>Others</option>
+                    </select>
+                </div>
+                <hr>
+                <div class="form-group mt-3">
+                    <label class="mr-2">Upload your Image</label>
+                    <input type="file" name="file">
+                </div>
+                <hr>
+                <button type="submit" class="btn btn-primary" id="submit-button">Submit</button>
+                <div id="loader" class="loader"></div>
+            </form>
+        </div>
+
+
+        <div class="modal fade" id="my-modal">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Prediction</h5>
+                        <button type="button" class="close" data-dismiss="modal"
+                            onclick="close_modal()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal"
+                            onclick="close_modal()">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+
+
+
+        var form = document.querySelector('form');
+        var consoleOutput = document.getElementById('console-output');
+        var loader = document.getElementById('loader');
+        var submitButton = document.getElementById('submit-button');
+        loader.style.display = 'none';
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+            loader.style.display = 'block';
+            submitButton.style.display = 'none';
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', 'http://127.0.0.1:5000/predict_cancer');
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    console.log('Console output: ' + xhr.responseText);
+                    let response = JSON.parse(xhr.responseText)
+                    if (response.status == "true") {
+                        open_modal(response.cancer_type, response.conf)
+                        loader.style.display = 'none';
+                        submitButton.style.display = 'block';
+                    }
+                    else {
+                        window.alert("Unable to Process the file");
+                        loader.style.display = 'none';
+                        submitButton.style.display = 'block';
+                    }
+                }
+            };
+            xhr.send(new FormData(form));
+        });
+
+
+        function open_modal(cancer_type, confidence) {
+            let modal = $('#my-modal')
+            modal.find('.modal-body').html('<p>The Predicted Skin Lesion Type is </p>  <canvas id="myChart"></canvas>');
+            createchart(cancer_type, confidence)
+            modal.modal("show")
+        }
+
+        function createchart(type, conf) {
+            var ctx = document.getElementById('myChart').getContext('2d');
+            var myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: type,
+                    datasets: [{
+                        label: 'Skin Lesion Type',
+                        data: conf,
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.2)',
+                            'rgba(54, 162, 235, 0.2)',
+                            'rgba(255, 206, 86, 0.2)',
+                            'rgba(75, 192, 192, 0.2)',
+                            'rgba(153, 102, 255, 0.2)'
+                        ],
+                        borderColor: [
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(153, 102, 255, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true
+                            }
+                        }]
+                    }
+                }
+            });
+        }
+
+        function close_modal() {
+            $('#my-modal').modal('hide');
+            window.location.reload();
+        }
+
+
+    </script>
+
+</body>
+
+</html>
